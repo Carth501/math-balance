@@ -11,7 +11,7 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 
-[node name="PanelContainer" type="PanelContainer" parent="." node_paths=PackedStringArray("chart")]
+[node name="PanelContainer" type="PanelContainer" parent="." node_paths=PackedStringArray("chart", "current_value_label")]
 layout_mode = 1
 anchors_preset = 15
 anchor_right = 1.0
@@ -20,9 +20,14 @@ grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_bl13t")
 chart = NodePath("VBoxContainer/Chart")
+current_value_label = NodePath("VBoxContainer/CurrentValueLabel")
 
 [node name="VBoxContainer" type="VBoxContainer" parent="PanelContainer"]
 layout_mode = 2
+
+[node name="CurrentValueLabel" type="Label" parent="PanelContainer/VBoxContainer"]
+layout_mode = 2
+horizontal_alignment = 2
 
 [node name="Chart" parent="PanelContainer/VBoxContainer" instance=ExtResource("2_iyx0m")]
 layout_mode = 2
@@ -54,3 +59,9 @@ text = "+1"
 layout_mode = 2
 size_flags_horizontal = 3
 text = "+10"
+
+[connection signal="pressed" from="PanelContainer/VBoxContainer/HBoxContainer/Button" to="PanelContainer" method="_on_mass_subtract_button_pressed"]
+[connection signal="pressed" from="PanelContainer/VBoxContainer/HBoxContainer/Button2" to="PanelContainer" method="_on_subtract_button_pressed"]
+[connection signal="pressed" from="PanelContainer/VBoxContainer/HBoxContainer/Button3" to="PanelContainer" method="_on_reset_button_pressed"]
+[connection signal="pressed" from="PanelContainer/VBoxContainer/HBoxContainer/Button4" to="PanelContainer" method="_on_add_button_pressed"]
+[connection signal="pressed" from="PanelContainer/VBoxContainer/HBoxContainer/Button5" to="PanelContainer" method="_on_mass_add_button_pressed"]

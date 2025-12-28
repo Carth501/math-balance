@@ -6,8 +6,8 @@ signal history_8_updated(new_value);
 signal history_64_updated(new_value);
 signal history_512_updated(new_value);
 
-var default_value := 0;
-var value := 0;
+var default_value := 0.0;
+var value := 0.0;
 ## Stores the snapshot value for each of the last 8 seconds.
 # 2^3
 var history_8s: Array = [];

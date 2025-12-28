@@ -38,6 +38,7 @@ func process_o2(delta: float) -> void:
 	var o2_value: Value = matrix.get("o2", null);
 	if !o2_value:
 		push_error("O2 value not found in CentralMatrixSingle.");
-	var success = o2_value.add_value(delta * -0.5);
+	var value_change = delta * -0.02;
+	var success = o2_value.add_value(value_change);
 	if !success:
 		o2_value.set_value(0);
