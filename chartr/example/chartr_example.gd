@@ -4,7 +4,7 @@ extends Control
 
 func _ready() -> void:
 	var settings: ChartrSettings = ChartrSettings.new();
-	settings.zero_origin = true;
+	settings.zero_origin = false;
 	chart.bind_settings(settings);
 	chart.display(
 		[0, 1, 2, 3, 4, 5, 6, 7],

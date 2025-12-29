@@ -30,8 +30,8 @@ func generate_point_array(x_values: Array, y_values: Array) -> PackedVector2Arra
 	for i in range(min(x_values.size(), y_values.size())):
 		raw_points.append(
 			Vector2(
-				(x_values[i] - x_max_and_min["min"]) / x_max_and_min["max"],
-				(y_values[i] - y_max_and_min["min"]) / y_max_and_min["max"]
+				(x_values[i] - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]),
+				(y_values[i] - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"])
 				));
 	return raw_points;
 
@@ -57,12 +57,14 @@ func get_max_and_min(values: Array) -> Dictionary:
 	var max_value: float = - INF;
 	var min_value: float = INF;
 	if settings.zero_origin:
+		max_value = 0;
 		min_value = 0;
 	for v in values:
 		if v > max_value:
 			max_value = v;
 		if v < min_value:
 			min_value = v;
+	print("Max value: %f, Min value: %f" % [max_value, min_value]);
 	return {
 		"max": max_value,
 		"min": min_value,
