@@ -22,20 +22,28 @@ func display(x_values: Array, y_values: Array) -> void:
 	if x_values.size() < 2:
 		push_warning("Not enough points to plot.");
 		return ;
-	chart_area.points = generate_point_array(x_values, y_values);
+	var y_max_and_min = get_max_and_min(y_values);
+	var x_max_and_min = get_max_and_min(x_values);
+	chart_area.points = generate_point_array(x_values, y_values, x_max_and_min, y_max_and_min);
 	if settings.margins:
 		margin_container.add_theme_constant_override("margin_left", 40)
 		margin_container.add_theme_constant_override("margin_bottom", 40)
+		if settings.x_axis_labels.size() > 0:
+			for x in settings.x_axis_labels:
+				var label: Label = Label.new();
+				add_child(label);
+				label.text = str(x);
+				label.position = Vector2(
+					((float(x) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"])) * (size.x - 40) + 40 - label.size.x / 2,
+					size.y - 20 - label.size.y / 2
+				);
 	else:
 		margin_container.add_theme_constant_override("margin_left", 0)
 		margin_container.add_theme_constant_override("margin_bottom", 0)
-
 	chart_area.draw_queued = true;
 
-## calculates the relative positions the points will be placed at, from 0 to 1.
-func generate_point_array(x_values: Array, y_values: Array) -> PackedVector2Array:
-	var y_max_and_min = get_max_and_min(y_values);
-	var x_max_and_min = get_max_and_min(x_values);
+## Calculates the relative positions the points will be placed at, from 0 to 1.
+func generate_point_array(x_values: Array, y_values: Array, x_max_and_min: Dictionary, y_max_and_min: Dictionary) -> PackedVector2Array:
 	var raw_points: PackedVector2Array = [];
 	for i in range(min(x_values.size(), y_values.size())):
 		raw_points.append(
