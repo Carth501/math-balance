@@ -1,0 +1,17 @@
+[gd_scene load_steps=3 format=3 uid="uid://cxk8ol30sb67x"]
+
+[ext_resource type="Script" uid="uid://rknu2g48rkjf" path="res://chartr/example/chartr_example.gd" id="1_olkal"]
+[ext_resource type="PackedScene" uid="uid://xob2owowf3ri" path="res://chartr/scenes/chartr.tscn" id="2_mtegc"]
+
+[node name="ChartrExample" type="Control" node_paths=PackedStringArray("chart")]
+layout_mode = 3
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+script = ExtResource("1_olkal")
+chart = NodePath("Chartr")
+
+[node name="Chartr" parent="." instance=ExtResource("2_mtegc")]
+layout_mode = 1
