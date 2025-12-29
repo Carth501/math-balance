@@ -1,8 +1,9 @@
-[gd_scene load_steps=2 format=3 uid="uid://xob2owowf3ri"]
+[gd_scene load_steps=3 format=3 uid="uid://xob2owowf3ri"]
 
 [ext_resource type="Script" uid="uid://b0noujqe7pyop" path="res://chartr/scripts/chartr.gd" id="1_nxgpe"]
+[ext_resource type="Script" uid="uid://cscnv2fgef865" path="res://chartr/scripts/chart_area.gd" id="2_pcbmv"]
 
-[node name="Chartr" type="Control"]
+[node name="Chartr" type="Control" node_paths=PackedStringArray("chart_area", "margin_container")]
 layout_mode = 3
 anchors_preset = 15
 anchor_right = 1.0
@@ -10,3 +11,19 @@ anchor_bottom = 1.0
 grow_horizontal = 2
 grow_vertical = 2
 script = ExtResource("1_nxgpe")
+chart_area = NodePath("MarginContainer/ChartArea")
+margin_container = NodePath("MarginContainer")
+
+[node name="MarginContainer" type="MarginContainer" parent="."]
+layout_mode = 1
+anchors_preset = 15
+anchor_right = 1.0
+anchor_bottom = 1.0
+grow_horizontal = 2
+grow_vertical = 2
+
+[node name="ChartArea" type="Control" parent="MarginContainer"]
+layout_mode = 2
+script = ExtResource("2_pcbmv")
+
+[connection signal="resized" from="MarginContainer/ChartArea" to="MarginContainer/ChartArea" method="_resized"]

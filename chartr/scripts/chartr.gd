@@ -1,26 +1,36 @@
 class_name Chartr extends Control
 
+@export var chart_area: ChartArea;
+@export var margin_container: MarginContainer;
 var settings: ChartrSettings = ChartrSettings.new();
-var points: PackedVector2Array = [];
-var draw_queued: bool = false;
 
 ## Settings will apply the next time display() is called.
 ## Some settings may apply the next time queue_plot() is called.
 func bind_settings(new_settings: ChartrSettings) -> void:
-	settings = new_settings
+	settings = new_settings;
+	chart_area.settings = new_settings
  
 ## Function to display data given x and y values.
 ## Call again to update the display. Warning! This will overwrite previous data.
 func display(x_values: Array, y_values: Array) -> void:
+	if size.x < 60 or size.y < 60:
+		push_warning("Chartr size is very small, and might not be displayed properly.");
+		return ;
 	if x_values.size() != y_values.size():
 		push_warning("data size mismatch: x_values size %d, y_values size %d" % [x_values.size(), y_values.size()]);
 		return ;
 	if x_values.size() < 2:
 		push_warning("Not enough points to plot.");
 		return ;
-	points = generate_point_array(x_values, y_values);
+	chart_area.points = generate_point_array(x_values, y_values);
+	if settings.margins:
+		margin_container.add_theme_constant_override("margin_left", 40)
+		margin_container.add_theme_constant_override("margin_bottom", 40)
+	else:
+		margin_container.add_theme_constant_override("margin_left", 0)
+		margin_container.add_theme_constant_override("margin_bottom", 0)
 
-	draw_queued = true;
+	chart_area.draw_queued = true;
 
 ## calculates the relative positions the points will be placed at, from 0 to 1.
 func generate_point_array(x_values: Array, y_values: Array) -> PackedVector2Array:
@@ -35,27 +45,6 @@ func generate_point_array(x_values: Array, y_values: Array) -> PackedVector2Arra
 				));
 	return raw_points;
 
-func _draw() -> void:
-	var scaled_points: PackedVector2Array = [];
-	for point in points:
-		scaled_points.append(
-			Vector2(
-				point.x * size.x,
-				size.y - (point.y * size.y)
-			)
-		);
-	if draw_queued:
-		draw_polyline(scaled_points, Color.WHITE, 4);
-		draw_queued = false;
-		if settings.shading:
-			var shading_points: PackedVector2Array = scaled_points.duplicate();
-			shading_points.append(Vector2(scaled_points[scaled_points.size() - 1].x, size.y));
-			shading_points.append(Vector2(scaled_points[0].x, size.y));
-			draw_colored_polygon(shading_points, settings.shading_color, [], null);
-	if settings.grid_lines:
-		for point in scaled_points:
-			draw_line(Vector2(point.x, 0), Vector2(point.x, size.y), Color(0.5, 0.5, 0.5, 0.3), 2);
-
 func get_max_and_min(values: Array) -> Dictionary:
 	var max_value: float = - INF;
 	var min_value: float = INF;
@@ -67,11 +56,7 @@ func get_max_and_min(values: Array) -> Dictionary:
 			max_value = v;
 		if v < min_value:
 			min_value = v;
-	print("Max value: %f, Min value: %f" % [max_value, min_value]);
 	return {
 		"max": max_value,
 		"min": min_value,
 	};
-
-func _resized() -> void:
-	draw_queued = true;
