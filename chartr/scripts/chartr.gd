@@ -52,6 +52,9 @@ func _draw() -> void:
 			shading_points.append(Vector2(scaled_points[scaled_points.size() - 1].x, size.y));
 			shading_points.append(Vector2(scaled_points[0].x, size.y));
 			draw_colored_polygon(shading_points, settings.shading_color, [], null);
+	if settings.grid_lines:
+		for point in scaled_points:
+			draw_line(Vector2(point.x, 0), Vector2(point.x, size.y), Color(0.5, 0.5, 0.5, 0.3), 2);
 
 func get_max_and_min(values: Array) -> Dictionary:
 	var max_value: float = - INF;
