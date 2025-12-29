@@ -4,8 +4,9 @@ extends Control
 
 func _ready() -> void:
 	var settings: ChartrSettings = ChartrSettings.new();
-	settings.zero_origin = false;
+	settings.zero_origin = true;
 	settings.x_axis_labels = [0, 2, 4, 6];
+	settings.y_axis_labels = [0, 5, 10, 15, 20, 25, 30];
 	chart.bind_settings(settings);
 	chart.display(
 		[0, 1, 2, 3, 4, 5, 6, 7],

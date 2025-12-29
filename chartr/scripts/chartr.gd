@@ -30,12 +30,27 @@ func display(x_values: Array, y_values: Array) -> void:
 		margin_container.add_theme_constant_override("margin_bottom", 40)
 		if settings.x_axis_labels.size() > 0:
 			for x in settings.x_axis_labels:
+				if x < x_max_and_min["min"] or x > x_max_and_min["max"]:
+					continue ;
 				var label: Label = Label.new();
 				add_child(label);
 				label.text = str(x);
+				var label_relative_position = ((float(x) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]));
 				label.position = Vector2(
-					((float(x) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"])) * (size.x - 40) + 40 - label.size.x / 2,
+					label_relative_position * (size.x - 40) + 40 - label.size.x / 2,
 					size.y - 20 - label.size.y / 2
+				);
+		if settings.y_axis_labels.size() > 0:
+			for y in settings.y_axis_labels:
+				if y < y_max_and_min["min"] or y > y_max_and_min["max"]:
+					continue ;
+				var label: Label = Label.new();
+				add_child(label);
+				label.text = str(y);
+				var label_relative_position = ((float(y) - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]));
+				label.position = Vector2(
+					5,
+					size.y - (label_relative_position * (size.y - 40) + 40) - label.size.y / 2
 				);
 	else:
 		margin_container.add_theme_constant_override("margin_left", 0)
