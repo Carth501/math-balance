@@ -14,3 +14,5 @@ var margins: bool = true;
 var x_axis_labels: Array = [];
 ## Labels for the y axis. Leave empty for automatic labeling.
 var y_axis_labels: Array = [];
+## The percentage of padding to add around the chart area.
+var padding: Vector2 = Vector2(0.05, 0.1);

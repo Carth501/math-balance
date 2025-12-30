@@ -15,5 +15,3 @@ chart = NodePath("Chartr")
 
 [node name="Chartr" parent="." instance=ExtResource("2_mtegc")]
 layout_mode = 1
-
-[connection signal="resized" from="Chartr" to="Chartr" method="_resized"]

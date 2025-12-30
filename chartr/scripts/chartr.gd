@@ -1,14 +1,15 @@
 class_name Chartr extends Control
 
-@export var chart_area: ChartArea;
-@export var margin_container: MarginContainer;
 var settings: ChartrSettings = ChartrSettings.new();
+var points: PackedVector2Array = [];
+var draw_queued: bool = false;
+var chart_area_top_left: Vector2 = Vector2.ZERO;
+var chart_area_bottom_right: Vector2 = Vector2.ZERO;
 
 ## Settings will apply the next time display() is called.
 ## Some settings may apply the next time queue_plot() is called.
 func bind_settings(new_settings: ChartrSettings) -> void:
 	settings = new_settings;
-	chart_area.settings = new_settings
  
 ## Function to display data given x and y values.
 ## Call again to update the display. Warning! This will overwrite previous data.
@@ -24,16 +25,16 @@ func display(x_values: Array, y_values: Array) -> void:
 		return ;
 	var y_max_and_min = get_max_and_min(y_values);
 	var x_max_and_min = get_max_and_min(x_values);
-	chart_area.points = generate_point_array(x_values, y_values, x_max_and_min, y_max_and_min);
+	points = generate_point_array(x_values, y_values, x_max_and_min, y_max_and_min);
 	if settings.margins:
-		margin_container.add_theme_constant_override("margin_left", 40)
-		margin_container.add_theme_constant_override("margin_bottom", 40)
+		chart_area_top_left = Vector2(40, 0);
+		chart_area_bottom_right = Vector2(size.x, size.y - 40);
 		generate_axis_labels(settings.x_axis_labels, x_max_and_min, true);
 		generate_axis_labels(settings.y_axis_labels, y_max_and_min, false);
 	else:
-		margin_container.add_theme_constant_override("margin_left", 0)
-		margin_container.add_theme_constant_override("margin_bottom", 0)
-	chart_area.draw_queued = true;
+		chart_area_top_left = Vector2(0, 0);
+		chart_area_bottom_right = size;
+	draw_queued = true;
 
 ## Calculates the relative positions the points will be placed at, from 0 to 1.
 func generate_point_array(x_values: Array, y_values: Array, x_max_and_min: Dictionary, y_max_and_min: Dictionary) -> PackedVector2Array:
@@ -74,11 +75,50 @@ func generate_axis_labels(labels_array: Array, max_and_min: Dictionary, is_x_axi
 		var label_relative_position = ((float(value) - max_and_min["min"]) / (max_and_min["max"] - max_and_min["min"]));
 		if is_x_axis:
 			label.position = Vector2(
-				label_relative_position * (size.x - 40) + 40 - label.size.x / 2,
+				get_x(label_relative_position) - label.size.x / 2,
 				size.y - 20 - label.size.y / 2
 			);
 		else:
 			label.position = Vector2(
 				5,
-				size.y - (label_relative_position * (size.y - 40) + 40) - label.size.y / 2
+				get_y(label_relative_position) - label.size.y / 2
 			);
+
+func _draw() -> void:
+	print("Drawing chart...");
+	if !draw_queued:
+		return ;
+	var scaled_points: PackedVector2Array = [];
+	for point in points:
+		scaled_points.append(
+			Vector2(
+				get_x(point.x),
+				get_y(point.y)
+			)
+		);
+	draw_polyline(scaled_points, Color.WHITE, 4);
+	if settings.shading:
+		var shading_points: PackedVector2Array = scaled_points.duplicate();
+		var origin_y: float = get_y(0);
+		shading_points.append(Vector2(scaled_points[scaled_points.size() - 1].x, origin_y));
+		shading_points.append(Vector2(scaled_points[0].x, origin_y));
+		draw_colored_polygon(shading_points, settings.shading_color, [], null);
+	if settings.grid_lines:
+		for point in scaled_points:
+			draw_line(Vector2(point.x, 0), Vector2(point.x, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
+
+	draw_queued = false;
+
+func _resized() -> void:
+	draw_queued = true;
+
+func get_y(y_value: float) -> float:
+	var bottom_border: float = chart_area_bottom_right.y;
+	var padding: float = settings.padding.y * (chart_area_bottom_right.y - chart_area_top_left.y);
+	return bottom_border - padding - (y_value * (chart_area_bottom_right.y - chart_area_top_left.y - (2 * padding)));
+
+func get_x(x_value: float) -> float:
+	var left_border: float = chart_area_top_left.x;
+	var padding: float = settings.padding.x * (chart_area_bottom_right.x - left_border);
+	left_border += padding;
+	return left_border + x_value * (chart_area_bottom_right.x - left_border - padding);
