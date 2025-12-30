@@ -85,7 +85,6 @@ func generate_axis_labels(labels_array: Array, max_and_min: Dictionary, is_x_axi
 			);
 
 func _draw() -> void:
-	print("Drawing chart...");
 	if !draw_queued:
 		return ;
 	var scaled_points: PackedVector2Array = [];
@@ -110,6 +109,12 @@ func _draw() -> void:
 	draw_queued = false;
 
 func _resized() -> void:
+	if settings.margins:
+		chart_area_top_left = Vector2(40, 0);
+		chart_area_bottom_right = Vector2(size.x, size.y - 40);
+	else:
+		chart_area_top_left = Vector2(0, 0);
+		chart_area_bottom_right = size;
 	draw_queued = true;
 
 func get_y(y_value: float) -> float:
