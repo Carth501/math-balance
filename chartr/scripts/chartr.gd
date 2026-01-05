@@ -41,7 +41,6 @@ func display(x_values: Array, y_values: Array) -> void:
 		if settings.auto_y_axis_labels:
 			y_axis_label_values = calculate_axis_labels(y_max_and_min);
 		generate_axis_labels(y_axis_label_values, y_max_and_min, false);
-		place_axis_labels();
 	else:
 		chart_area_top_left = Vector2(0, 0);
 		chart_area_bottom_right = size;
@@ -85,9 +84,25 @@ func generate_axis_labels(labels_array: Array, max_and_min: Dictionary, is_x_axi
 		label.text = str(value);
 		if is_x_axis:
 			x_axis_labels_nodes.append(label);
+			label.position = calculate_axis_label_position(value, true) - label.size / 2;
 		else:
 			y_axis_labels_nodes.append(label);
+			label.position = calculate_axis_label_position(value, false) - label.size / 2;
 	
+func calculate_axis_label_position(value: float, is_x_axis: bool) -> Vector2:
+	if is_x_axis:
+		var label_relative_position = ((float(value) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]));
+		return Vector2(
+			get_x(label_relative_position),
+			size.y - 20
+		);
+	else:
+		var label_relative_position = ((float(value) - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]));
+		return Vector2(
+			5,
+			get_y(label_relative_position)
+		);
+
 func place_axis_labels() -> void:
 	if x_max_and_min == null or y_max_and_min == null:
 		return ;
