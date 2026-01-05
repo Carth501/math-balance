@@ -86,7 +86,6 @@ func place_axis_labels() -> void:
 	if x_max_and_min == null or y_max_and_min == null:
 		return ;
 	if !x_max_and_min.has("min") or !x_max_and_min.has("max"):
-		breakpoint
 		return ;
 	if !y_max_and_min.has("min") or !y_max_and_min.has("max"):
 		return ;
@@ -126,7 +125,12 @@ func _draw() -> void:
 	if settings.grid_lines:
 		for point in scaled_points:
 			draw_line(Vector2(point.x, 0), Vector2(point.x, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
-
+		if y_max_and_min["max"] >= 0 and y_max_and_min["min"] <= 0 or settings.zero_origin:
+			var zero_y: float = get_y(0);
+			draw_line(Vector2(chart_area_top_left.x, zero_y), Vector2(chart_area_bottom_right.x, zero_y), Color(0.5, 0.5, 0.5, 0.3), 2);
+		if x_max_and_min["max"] >= 0 and x_max_and_min["min"] <= 0 or settings.zero_origin:
+			var zero_x: float = get_x(0);
+			draw_line(Vector2(zero_x, chart_area_top_left.y), Vector2(zero_x, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
 	draw_queued = false;
 
 func _resized() -> void:
