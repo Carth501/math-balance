@@ -10,9 +10,13 @@ var shading_color: Color = Color(0, 0, 0, 1);
 var grid_lines: bool = true;
 ## If true, margins will be added around the chart area for the axes' labels.
 var margins: bool = true;
-## Labels for the x axis. Leave empty for automatic labeling.
-var x_axis_labels: Array = [];
-## Labels for the y axis. Leave empty for automatic labeling.
-var y_axis_labels: Array = [];
+## Labels for the x axis.
+var x_axis_labels: Array;
+## Overrides x axis labels with automatically generated ones.
+var auto_x_axis_labels: bool = false;
+## Labels for the y axis.
+var y_axis_labels: Array;
+## Overrides y axis labels with automatically generated ones.
+var auto_y_axis_labels: bool = false;
 ## The percentage of padding to add around the chart area.
 var padding: Vector2 = Vector2(0.05, 0.1);

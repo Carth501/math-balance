@@ -33,8 +33,14 @@ func display(x_values: Array, y_values: Array) -> void:
 	if settings.margins:
 		chart_area_top_left = Vector2(40, 0);
 		chart_area_bottom_right = Vector2(size.x, size.y - 40);
-		generate_axis_labels(settings.x_axis_labels, x_max_and_min, true);
-		generate_axis_labels(settings.y_axis_labels, y_max_and_min, false);
+		var x_axis_label_values: Array = settings.x_axis_labels;
+		if settings.auto_x_axis_labels:
+			x_axis_label_values = calculate_axis_labels(x_max_and_min);
+		generate_axis_labels(x_axis_label_values, x_max_and_min, true);
+		var y_axis_label_values: Array = settings.y_axis_labels;
+		if settings.auto_y_axis_labels:
+			y_axis_label_values = calculate_axis_labels(y_max_and_min);
+		generate_axis_labels(y_axis_label_values, y_max_and_min, false);
 		place_axis_labels();
 	else:
 		chart_area_top_left = Vector2(0, 0);
@@ -153,3 +159,23 @@ func get_x(x_value: float) -> float:
 	var padding: float = settings.padding.x * (chart_area_bottom_right.x - left_border);
 	left_border += padding;
 	return left_border + x_value * (chart_area_bottom_right.x - left_border - padding);
+
+func calculate_axis_labels(max_and_min: Dictionary) -> Array:
+	var labels_array: Array = [];
+	var top = max_and_min["max"];
+	if settings.zero_origin and max_and_min["max"] < 0:
+		top = 0;
+	var bottom = max_and_min["min"];
+	if settings.zero_origin and max_and_min["min"] > 0:
+		bottom = 0;
+	var scale_value = (log(abs(top - bottom)) / log(10) - 1);
+	var step: float = pow(10, scale_value);
+	var count: int = int(((top * 1.1) - (bottom * 1.1)) / step);
+	var rounding_factor = pow(10, roundi(scale_value - 2));
+	labels_array = [];
+	for i in range(count + 1):
+		labels_array.append(round_to_factor(bottom + step * i, rounding_factor));
+	return labels_array;
+
+func round_to_factor(value: float, factor: float) -> float:
+	return round(value / factor) * factor;
