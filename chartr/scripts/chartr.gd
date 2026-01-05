@@ -5,8 +5,8 @@ var points: PackedVector2Array = [];
 var draw_queued: bool = false;
 var chart_area_top_left: Vector2 = Vector2.ZERO;
 var chart_area_bottom_right: Vector2 = Vector2.ZERO;
-var x_axis_labels_nodes: Array = [];
-var y_axis_labels_nodes: Array = [];
+var x_axis_labels_nodes: Dictionary = {};
+var y_axis_labels_nodes: Dictionary = {};
 var y_max_and_min: Dictionary;
 var x_max_and_min: Dictionary;
 
@@ -33,11 +33,11 @@ func display(x_values: Array, y_values: Array) -> void:
 	if settings.margins:
 		chart_area_top_left = Vector2(40, 0);
 		chart_area_bottom_right = Vector2(size.x, size.y - 40);
-		var x_axis_label_values: Array = settings.x_axis_labels;
+		var x_axis_label_values = settings.x_axis_labels;
 		if settings.auto_x_axis_labels:
 			x_axis_label_values = calculate_axis_labels(x_max_and_min);
 		generate_axis_labels(x_axis_label_values, x_max_and_min, true);
-		var y_axis_label_values: Array = settings.y_axis_labels;
+		var y_axis_label_values = settings.y_axis_labels;
 		if settings.auto_y_axis_labels:
 			y_axis_label_values = calculate_axis_labels(y_max_and_min);
 		generate_axis_labels(y_axis_label_values, y_max_and_min, false);
@@ -83,10 +83,10 @@ func generate_axis_labels(labels_array: Array, max_and_min: Dictionary, is_x_axi
 		add_child(label);
 		label.text = str(value);
 		if is_x_axis:
-			x_axis_labels_nodes.append(label);
+			x_axis_labels_nodes[value] = label;
 			label.position = calculate_axis_label_position(value, true) - label.size / 2;
 		else:
-			y_axis_labels_nodes.append(label);
+			y_axis_labels_nodes[value] = label;
 			label.position = calculate_axis_label_position(value, false) - label.size / 2;
 	
 func calculate_axis_label_position(value: float, is_x_axis: bool) -> Vector2:
@@ -144,8 +144,14 @@ func _draw() -> void:
 		shading_points.append(Vector2(scaled_points[0].x, origin_y));
 		draw_colored_polygon(shading_points, settings.shading_color, [], null);
 	if settings.grid_lines:
-		for point in scaled_points:
-			draw_line(Vector2(point.x, 0), Vector2(point.x, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
+		for value in x_axis_labels_nodes.keys():
+			var scaled_x_value = (value - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]);
+			var horizontal_postion = get_x(scaled_x_value);
+			draw_line(Vector2(horizontal_postion, chart_area_top_left.y), Vector2(horizontal_postion, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
+		for value in y_axis_labels_nodes.keys():
+			var scaled_y_value = (value - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]);
+			var vertical_position = get_y(scaled_y_value);
+			draw_line(Vector2(chart_area_top_left.x, vertical_position), Vector2(chart_area_bottom_right.x, vertical_position), Color(0.5, 0.5, 0.5, 0.3), 2);
 		if y_max_and_min["max"] >= 0 and y_max_and_min["min"] <= 0 or settings.zero_origin:
 			var zero_y: float = get_y(0);
 			draw_line(Vector2(chart_area_top_left.x, zero_y), Vector2(chart_area_bottom_right.x, zero_y), Color(0.5, 0.5, 0.5, 0.3), 2);
