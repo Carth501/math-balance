@@ -1,4 +1,4 @@
-class_name ChartrSettings extends RefCounted
+class_name ChartrSettings extends Resource
 
 ## If true, the origin will be included in the chart area.
 var zero_origin: bool = true;

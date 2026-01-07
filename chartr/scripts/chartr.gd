@@ -1,6 +1,6 @@
 class_name Chartr extends Control
 
-var settings: ChartrSettings = ChartrSettings.new();
+@export var settings: ChartrSettings;
 var points: PackedVector2Array = [];
 var draw_queued: bool = false;
 var chart_area_top_left: Vector2 = Vector2.ZERO;
@@ -110,15 +110,15 @@ func place_axis_labels() -> void:
 		return ;
 	if !y_max_and_min.has("min") or !y_max_and_min.has("max"):
 		return ;
-	for label in x_axis_labels_nodes:
-		var value: float = float(label.text);
+	for value in x_axis_labels_nodes:
+		var label = x_axis_labels_nodes[value];
 		var label_relative_position = ((float(value) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]));
 		label.position = Vector2(
 			get_x(label_relative_position) - label.size.x / 2,
 			size.y - 20 - label.size.y / 2
 		);
-	for label in y_axis_labels_nodes:
-		var value: float = float(label.text);
+	for value in y_axis_labels_nodes:
+		var label = y_axis_labels_nodes[value];
 		var label_relative_position = ((float(value) - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]));
 		label.position = Vector2(
 			5,
@@ -161,6 +161,8 @@ func _draw() -> void:
 	draw_queued = false;
 
 func _resized() -> void:
+	if settings == null:
+		return ;
 	if settings.margins:
 		chart_area_top_left = Vector2(40, 0);
 		chart_area_bottom_right = Vector2(size.x, size.y - 40);
