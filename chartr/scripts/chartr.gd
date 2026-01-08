@@ -49,6 +49,12 @@ func display(x_values: Array, y_values: Array) -> void:
 ## Calculates the relative positions the points will be placed at, from 0 to 1.
 func generate_point_array(x_values: Array, y_values: Array) -> PackedVector2Array:
 	var raw_points: PackedVector2Array = [];
+	if (x_max_and_min["max"] - x_max_and_min["min"]) == 0:
+		push_warning("All x values are identical; cannot generate chart.");
+		return raw_points;
+	if (y_max_and_min["max"] - y_max_and_min["min"]) == 0:
+		push_warning("All y values are identical; cannot generate chart.");
+		return raw_points;
 	for i in range(min(x_values.size(), y_values.size())):
 		raw_points.append(
 			Vector2(
@@ -68,6 +74,10 @@ func get_max_and_min(values: Array) -> Dictionary:
 			max_value = v;
 		if v < min_value:
 			min_value = v;
+	if max_value == -INF:
+		max_value = 0;
+	if min_value == INF:
+		min_value = 0;
 	return {
 		"max": max_value,
 		"min": min_value,
@@ -77,6 +87,8 @@ func generate_axis_labels(labels_array: Array, max_and_min: Dictionary, is_x_axi
 	if labels_array.size() < 1:
 		return ;
 	for value in labels_array:
+		if value == null:
+			continue ;
 		if value < max_and_min["min"] or value > max_and_min["max"]:
 			continue ;
 		var label: Label = Label.new();

@@ -83,6 +83,7 @@ func _on_timer_1_timeout() -> void:
 
 func get_history_8s() -> Array:
 	var copy := history_8s.duplicate();
+	print("history_8s copy before padding: ", copy);
 	if copy.size() < 8:
 		for i in range(8 - copy.size()):
 			copy.append(0);
