@@ -164,10 +164,10 @@ func _draw() -> void:
 			var scaled_y_value = (value - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]);
 			var vertical_position = get_y(scaled_y_value);
 			draw_line(Vector2(chart_area_top_left.x, vertical_position), Vector2(chart_area_bottom_right.x, vertical_position), Color(0.5, 0.5, 0.5, 0.3), 2);
-		if y_max_and_min["max"] >= 0 and y_max_and_min["min"] <= 0 or settings.zero_origin:
+		if settings.zero_origin or (y_max_and_min["max"] >= 0 and y_max_and_min["min"] <= 0):
 			var zero_y: float = get_y(0);
 			draw_line(Vector2(chart_area_top_left.x, zero_y), Vector2(chart_area_bottom_right.x, zero_y), Color(0.5, 0.5, 0.5, 0.3), 2);
-		if x_max_and_min["max"] >= 0 and x_max_and_min["min"] <= 0 or settings.zero_origin:
+		if settings.zero_origin or (x_max_and_min["max"] >= 0 and x_max_and_min["min"] <= 0):
 			var zero_x: float = get_x(0);
 			draw_line(Vector2(zero_x, chart_area_top_left.y), Vector2(zero_x, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
 	draw_queued = false;
