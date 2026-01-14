@@ -24,7 +24,11 @@ func initialize_chart() -> void:
 	pass
 
 func update_chart(_new_value: float) -> void:
-	chart.display([0, 1, 2, 3, 4, 5, 6, 7], value.get_history_8s());
+	var y_values: Array = value.get_history_8s();
+	var data := {};
+	for x in range(y_values.size()):
+		data[x] = y_values[x];
+	chart.display(data);
 
 func _on_reset_button_pressed() -> void:
 	value.reset_value();

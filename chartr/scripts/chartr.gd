@@ -1,14 +1,15 @@
 class_name Chartr extends Control
 
 @export var settings: ChartrSettings;
-var points: PackedVector2Array = [];
+var raw_data: Dictionary;
+var percent_points: PackedVector2Array;
 var draw_queued: bool = false;
 var chart_area_top_left: Vector2 = Vector2.ZERO;
 var chart_area_bottom_right: Vector2 = Vector2.ZERO;
 var x_axis_labels_nodes: Dictionary = {};
 var y_axis_labels_nodes: Dictionary = {};
-var y_max_and_min: Dictionary;
-var x_max_and_min: Dictionary;
+var max_and_min: Dictionary;
+var polyline: Line2D;
 
 ## Settings will apply the next time display() is called.
 ## Some settings may apply the next time queue_plot() is called.
@@ -17,172 +18,80 @@ func bind_settings(new_settings: ChartrSettings) -> void:
  
 ## Function to display data given x and y values.
 ## Call again to update the display. Warning! This will overwrite previous data.
-func display(x_values: Array, y_values: Array) -> void:
+func display(data: Dictionary) -> void:
+	for key in data:
+		if float(key) == null:
+			push_warning("x_values must be numeric.");
+		if float(data[key]) == null:
+			push_warning("y_values must be numeric.");
+	raw_data = data;
+	if polyline == null:
+		polyline = Line2D.new();
+		add_child(polyline);
+	else:
+		polyline.clear_points();
 	if size.x < 60 or size.y < 60:
 		push_warning("Chartr size is very small, and might not be displayed properly.");
 		return ;
-	if x_values.size() != y_values.size():
-		push_warning("data size mismatch: x_values size %d, y_values size %d" % [x_values.size(), y_values.size()]);
-		return ;
-	if x_values.size() < 2:
-		push_warning("Not enough points to plot.");
-		return ;
-	y_max_and_min = get_max_and_min(y_values);
-	x_max_and_min = get_max_and_min(x_values);
-	points = generate_point_array(x_values, y_values);
-	if settings.margins:
-		chart_area_top_left = Vector2(40, 0);
-		chart_area_bottom_right = Vector2(size.x, size.y - 40);
-		var x_axis_label_values = settings.x_axis_labels;
-		if settings.auto_x_axis_labels:
-			x_axis_label_values = calculate_axis_labels(x_max_and_min);
-		generate_axis_labels(x_axis_label_values, x_max_and_min, true);
-		var y_axis_label_values = settings.y_axis_labels;
-		if settings.auto_y_axis_labels:
-			y_axis_label_values = calculate_axis_labels(y_max_and_min);
-		generate_axis_labels(y_axis_label_values, y_max_and_min, false);
-	else:
-		chart_area_top_left = Vector2(0, 0);
-		chart_area_bottom_right = size;
-	draw_queued = true;
+	max_and_min = get_max_and_min(raw_data);
+	percent_points = generate_point_array(raw_data);
+	var scaled_points := calculate_point_array(percent_points);
+	for point in scaled_points:
+		polyline.add_point(point);
+	chart_area_top_left = Vector2(0, 0);
+	chart_area_bottom_right = size;
 
 ## Calculates the relative positions the points will be placed at, from 0 to 1.
-func generate_point_array(x_values: Array, y_values: Array) -> PackedVector2Array:
-	var raw_points: PackedVector2Array = [];
-	if (x_max_and_min["max"] - x_max_and_min["min"]) == 0:
-		push_warning("All x values are identical; cannot generate chart.");
-		return raw_points;
-	if (y_max_and_min["max"] - y_max_and_min["min"]) == 0:
-		push_warning("All y values are identical; cannot generate chart.");
-		return raw_points;
-	for i in range(min(x_values.size(), y_values.size())):
-		raw_points.append(
-			Vector2(
-				(x_values[i] - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]),
-				(y_values[i] - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"])
-				));
-	return raw_points;
+func generate_point_array(data: Dictionary) -> PackedVector2Array:
+	var scaled_points: PackedVector2Array = [];
+	if (max_and_min["max"] - max_and_min["min"]) == Vector2.ZERO:
+		push_error("All x values are identical; cannot generate chart.");
+	var divisor = (max_and_min["max"] - max_and_min["min"]);
+	for x in data:
+		var point = Vector2(x, data[x]);
+		scaled_points.append(
+			(point - max_and_min["min"]) / divisor
+		);
+	return scaled_points;
 
-func get_max_and_min(values: Array) -> Dictionary:
-	var max_value: float = - INF;
-	var min_value: float = INF;
+func get_max_and_min(data: Dictionary) -> Dictionary:
+	var max_value: Vector2 = Vector2(-INF, -INF);
+	var min_value: Vector2 = Vector2(INF, INF);
 	if settings.zero_origin:
-		max_value = 0;
-		min_value = 0;
-	for v in values:
-		if v > max_value:
-			max_value = v;
-		if v < min_value:
-			min_value = v;
-	if max_value == -INF:
-		max_value = 0;
-	if min_value == INF:
-		min_value = 0;
+		max_value = Vector2(0, 0);
+		min_value = Vector2(0, 0);
+	for x in data:
+		if x > max_value.x:
+			max_value.x = x;
+		if x < min_value.x:
+			min_value.x = x;
+		var y = data[x];
+		if y > max_value.y:
+			max_value.y = y;
+		if y < min_value.y:
+			min_value.y = y;
+	if max_value.x == -INF || max_value.y == -INF:
+		push_error("Cannot determine max values for chart. Data: ", data);
+	if min_value.x == INF || min_value.y == INF:
+		push_error("Cannot determine max values for chart. Data: ", data);
 	return {
 		"max": max_value,
 		"min": min_value,
 	};
 
-func generate_axis_labels(labels_array: Array, max_and_min: Dictionary, is_x_axis: bool) -> void:
-	if labels_array.size() < 1:
-		return ;
-	for value in labels_array:
-		if value == null:
-			continue ;
-		if value < max_and_min["min"] or value > max_and_min["max"]:
-			continue ;
-		var label: Label = Label.new();
-		add_child(label);
-		label.text = str(value);
-		if is_x_axis:
-			x_axis_labels_nodes[value] = label;
-			label.position = calculate_axis_label_position(value, true) - label.size / 2;
-		else:
-			y_axis_labels_nodes[value] = label;
-			label.position = calculate_axis_label_position(value, false) - label.size / 2;
-	
-func calculate_axis_label_position(value: float, is_x_axis: bool) -> Vector2:
-	if is_x_axis:
-		var label_relative_position = ((float(value) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]));
-		return Vector2(
-			get_x(label_relative_position),
-			size.y - 20
-		);
-	else:
-		var label_relative_position = ((float(value) - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]));
-		return Vector2(
-			5,
-			get_y(label_relative_position)
-		);
-
-func place_axis_labels() -> void:
-	if x_max_and_min == null or y_max_and_min == null:
-		return ;
-	if !x_max_and_min.has("min") or !x_max_and_min.has("max"):
-		return ;
-	if !y_max_and_min.has("min") or !y_max_and_min.has("max"):
-		return ;
-	for value in x_axis_labels_nodes:
-		var label = x_axis_labels_nodes[value];
-		var label_relative_position = ((float(value) - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]));
-		label.position = Vector2(
-			get_x(label_relative_position) - label.size.x / 2,
-			size.y - 20 - label.size.y / 2
-		);
-	for value in y_axis_labels_nodes:
-		var label = y_axis_labels_nodes[value];
-		var label_relative_position = ((float(value) - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]));
-		label.position = Vector2(
-			5,
-			get_y(label_relative_position) - label.size.y / 2
-		);
-
-func _draw() -> void:
-	if !draw_queued:
-		return ;
+func calculate_point_array(points: PackedVector2Array) -> PackedVector2Array:
 	var scaled_points: PackedVector2Array = [];
 	for point in points:
-		scaled_points.append(
-			Vector2(
-				get_x(point.x),
-				get_y(point.y)
-			)
+		var scaled_point = Vector2(
+			get_x(point.x),
+			get_y(point.y)
 		);
-	draw_polyline(scaled_points, Color.WHITE, 4);
-	if settings.shading:
-		var shading_points: PackedVector2Array = scaled_points.duplicate();
-		var origin_y: float = get_y(0);
-		shading_points.append(Vector2(scaled_points[scaled_points.size() - 1].x, origin_y));
-		shading_points.append(Vector2(scaled_points[0].x, origin_y));
-		draw_colored_polygon(shading_points, settings.shading_color, [], null);
-	if settings.grid_lines:
-		for value in x_axis_labels_nodes.keys():
-			var scaled_x_value = (value - x_max_and_min["min"]) / (x_max_and_min["max"] - x_max_and_min["min"]);
-			var horizontal_postion = get_x(scaled_x_value);
-			draw_line(Vector2(horizontal_postion, chart_area_top_left.y), Vector2(horizontal_postion, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
-		for value in y_axis_labels_nodes.keys():
-			var scaled_y_value = (value - y_max_and_min["min"]) / (y_max_and_min["max"] - y_max_and_min["min"]);
-			var vertical_position = get_y(scaled_y_value);
-			draw_line(Vector2(chart_area_top_left.x, vertical_position), Vector2(chart_area_bottom_right.x, vertical_position), Color(0.5, 0.5, 0.5, 0.3), 2);
-		if settings.zero_origin or (y_max_and_min["max"] >= 0 and y_max_and_min["min"] <= 0):
-			var zero_y: float = get_y(0);
-			draw_line(Vector2(chart_area_top_left.x, zero_y), Vector2(chart_area_bottom_right.x, zero_y), Color(0.5, 0.5, 0.5, 0.3), 2);
-		if settings.zero_origin or (x_max_and_min["max"] >= 0 and x_max_and_min["min"] <= 0):
-			var zero_x: float = get_x(0);
-			draw_line(Vector2(zero_x, chart_area_top_left.y), Vector2(zero_x, chart_area_bottom_right.y), Color(0.5, 0.5, 0.5, 0.3), 2);
-	draw_queued = false;
+		scaled_points.append(scaled_point);
+	return scaled_points;
+
 
 func _resized() -> void:
-	if settings == null:
-		return ;
-	if settings.margins:
-		chart_area_top_left = Vector2(40, 0);
-		chart_area_bottom_right = Vector2(size.x, size.y - 40);
-	else:
-		chart_area_top_left = Vector2(0, 0);
-		chart_area_bottom_right = size;
-	place_axis_labels();
-	draw_queued = true;
+	pass ;
 
 func get_y(y_value: float) -> float:
 	var bottom_border: float = chart_area_bottom_right.y;
@@ -194,23 +103,6 @@ func get_x(x_value: float) -> float:
 	var padding: float = settings.padding.x * (chart_area_bottom_right.x - left_border);
 	left_border += padding;
 	return left_border + x_value * (chart_area_bottom_right.x - left_border - padding);
-
-func calculate_axis_labels(max_and_min: Dictionary) -> Array:
-	var labels_array: Array = [];
-	var top = max_and_min["max"];
-	if settings.zero_origin and max_and_min["max"] < 0:
-		top = 0;
-	var bottom = max_and_min["min"];
-	if settings.zero_origin and max_and_min["min"] > 0:
-		bottom = 0;
-	var scale_value = (log(abs(top - bottom)) / log(10) - 1);
-	var step: float = pow(10, scale_value);
-	var count: int = int(((top * 1.1) - (bottom * 1.1)) / step);
-	var rounding_factor = pow(10, roundi(scale_value - 2));
-	labels_array = [];
-	for i in range(count + 1):
-		labels_array.append(round_to_factor(bottom + step * i, rounding_factor));
-	return labels_array;
 
 func round_to_factor(value: float, factor: float) -> float:
 	return round(value / factor) * factor;
