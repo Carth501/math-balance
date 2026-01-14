@@ -1,5 +1,6 @@
 class_name ValueDisplay extends Node
 
+@export var value_id: String = "o2";
 @export var chart: Chartr;
 @export var current_value_label: Label;
 var value: Value;
@@ -9,9 +10,9 @@ func _ready() -> void:
 	if !CentralMatrixSingle.is_node_ready():
 		await CentralMatrixSingle.ready;
 		print("CentralMatrixSingle is ready, proceeding with ValueDisplay setup.");
-	value = CentralMatrixSingle.matrix.get("o2", null);
+	value = CentralMatrixSingle.matrix.get(value_id, null);
 	if !value:
-		push_error("O2 value not found in CentralMatrixSingle.");
+		push_error("%s value not found in CentralMatrixSingle." % value_id);
 		return ;
 	value.history_8_updated.connect(update_chart);
 	value.changed.connect(func(new_value: float) -> void:
