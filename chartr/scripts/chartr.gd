@@ -8,6 +8,7 @@ var chart_area_top_left: Vector2 = Vector2.ZERO;
 var chart_area_bottom_right: Vector2 = Vector2.ZERO;
 var max_and_min: Dictionary;
 var polyline: Line2D;
+var shading_polygon: Polygon2D;
 var grid_line_nodes: Dictionary = {};
 var chart_active: bool = false;
 
@@ -24,6 +25,9 @@ func display(data: Dictionary) -> void:
 			push_warning("x_values must be numeric.");
 		if float(data[key]) == null:
 			push_warning("y_values must be numeric.");
+	
+	set_margins();
+
 	raw_data = data;
 	if polyline == null:
 		polyline = Line2D.new();
@@ -38,26 +42,36 @@ func display(data: Dictionary) -> void:
 	var scaled_points := calculate_point_array(percent_points);
 	for point in scaled_points:
 		polyline.add_point(point);
+
+	if settings.shading:
+		if shading_polygon == null:
+			shading_polygon = Polygon2D.new();
+			add_child(shading_polygon);
+		calculate_shading_polygon(scaled_points);
+		shading_polygon.color = settings.shading_color;
+
+	elif shading_polygon != null:
+		remove_child(shading_polygon);
+		shading_polygon.queue_free();
+		shading_polygon = null;
+
 	if settings.margins:
-		calculate_chart_area_with_margins();
 		draw_grid_lines();
-	else:
-		chart_area_top_left = Vector2(0, 0);
-		chart_area_bottom_right = size;
+
 	chart_active = true;
 
 ## Calculates the relative positions the points will be placed at, from 0 to 1.
 func generate_point_array(data: Dictionary) -> PackedVector2Array:
-	var scaled_points: PackedVector2Array = [];
+	var new_percent_points: PackedVector2Array = [];
 	if (max_and_min["max"] - max_and_min["min"]) == Vector2.ZERO:
 		push_error("All x values are identical; cannot generate chart.");
 	var divisor = (max_and_min["max"] - max_and_min["min"]);
 	for x in data:
 		var point = Vector2(x, data[x]);
-		scaled_points.append(
+		new_percent_points.append(
 			(point - max_and_min["min"]) / divisor
 		);
-	return scaled_points;
+	return new_percent_points;
 
 func get_max_and_min(data: Dictionary) -> Dictionary:
 	var max_value: Vector2 = Vector2(-INF, -INF);
@@ -99,14 +113,14 @@ func _resized() -> void:
 	if !chart_active:
 		return ;
 	calculate_chart_area_with_margins();
-	for i in range(percent_points.size()):
-		var point = percent_points[i];
-		var scaled_point = Vector2(
-			get_x_on_chart(point.x),
-			get_y_on_chart(point.y)
-		);
-		polyline.set_point_position(i, scaled_point);
+	var scaled_points := calculate_point_array(percent_points);
+	for i in range(scaled_points.size()):
+		var point = scaled_points[i];
+		polyline.set_point_position(i, point);
 	draw_grid_lines();
+
+	if settings.shading and shading_polygon != null:
+		calculate_shading_polygon(scaled_points);
 
 func get_y_on_chart(y_value: float) -> float:
 	var bottom_border: float = chart_area_bottom_right.y;
@@ -192,3 +206,21 @@ func calculate_reasonable_number_of_grid_lines(value: float) -> int:
 func calculate_chart_area_with_margins() -> void:
 	chart_area_top_left = Vector2(60, 0);
 	chart_area_bottom_right = size - Vector2(0, 40);
+
+func calculate_shading_polygon(scaled_points: PackedVector2Array) -> void:
+	var polygon_shape = scaled_points.duplicate();
+	var zero_y = get_y_on_chart(0);
+	var zero_x = get_x_on_chart(0);
+	var max_x = get_x_on_chart(1);
+	polygon_shape.append(Vector2(max_x, zero_y));
+	var bottom_left = Vector2(zero_x, zero_y);
+	polygon_shape.append(bottom_left);
+	
+	shading_polygon.polygon = polygon_shape;
+
+func set_margins() -> void:
+	if settings.margins:
+		calculate_chart_area_with_margins();
+	else:
+		chart_area_top_left = Vector2(0, 0);
+		chart_area_bottom_right = size;
