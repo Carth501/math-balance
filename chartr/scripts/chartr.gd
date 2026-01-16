@@ -120,7 +120,7 @@ func draw_x_grid_lines() -> void:
 	if !settings.grid_lines:
 		return ;
 	var x_range: float = max_and_min["max"].x - max_and_min["min"].x;
-	var approx_lines: int = 10;
+	var approx_lines: int = calculate_reasonable_number_of_grid_lines(chart_area_bottom_right.x - chart_area_top_left.x);
 	var raw_interval: float = x_range / approx_lines;
 	grid_line_nodes["x"] = {};
 	for count in range(approx_lines + 1):
@@ -144,7 +144,7 @@ func draw_y_grid_lines() -> void:
 	if !settings.grid_lines:
 		return ;
 	var y_range: float = max_and_min["max"].y - max_and_min["min"].y;
-	var approx_lines: int = 10;
+	var approx_lines: int = calculate_reasonable_number_of_grid_lines(chart_area_bottom_right.y - chart_area_top_left.y);
 	var raw_interval: float = y_range / approx_lines;
 	grid_line_nodes["y"] = {};
 	for count in range(approx_lines + 1):
@@ -174,3 +174,6 @@ func clear_grid_lines() -> void:
 			remove_child(grid_line_label_node);
 			grid_line_label_node.queue_free();
 	grid_line_nodes.clear();
+
+func calculate_reasonable_number_of_grid_lines(value: float) -> int:
+	return round(value / 50);
