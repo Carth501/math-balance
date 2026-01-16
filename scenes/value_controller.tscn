@@ -1,13 +1,11 @@
 [gd_scene load_steps=5 format=3 uid="uid://ycrcchgsmjcc"]
 
 [ext_resource type="Script" uid="uid://dahod6ykaxcqp" path="res://scripts/display/value_display.gd" id="1_ymjym"]
-[ext_resource type="Script" uid="uid://b0noujqe7pyop" path="res://chartr/scripts/chartr.gd" id="2_ymjym"]
+[ext_resource type="PackedScene" uid="uid://xob2owowf3ri" path="res://chartr/scenes/chartr.tscn" id="2_ymjym"]
 [ext_resource type="Script" uid="uid://nq4yml0kgxrx" path="res://chartr/scripts/chartr_settings.gd" id="3_sxyj6"]
 
-[sub_resource type="Resource" id="Resource_bcibk"]
+[sub_resource type="Resource" id="Resource_sxyj6"]
 script = ExtResource("3_sxyj6")
-x_axis_labels = [2, 4, 6, 8]
-auto_y_axis_labels = true
 metadata/_custom_type_script = "uid://nq4yml0kgxrx"
 
 [node name="ValueController" type="PanelContainer" node_paths=PackedStringArray("chart", "current_value_label")]
@@ -28,12 +26,10 @@ visible = false
 layout_mode = 2
 horizontal_alignment = 2
 
-[node name="Chartr" type="Control" parent="VBoxContainer"]
+[node name="Chartr" parent="VBoxContainer" instance=ExtResource("2_ymjym")]
 layout_mode = 2
 size_flags_vertical = 3
-script = ExtResource("2_ymjym")
-settings = SubResource("Resource_bcibk")
-metadata/_custom_type_script = "uid://b0noujqe7pyop"
+settings = SubResource("Resource_sxyj6")
 
 [node name="HBoxContainer" type="HBoxContainer" parent="VBoxContainer"]
 layout_mode = 2

@@ -9,6 +9,7 @@ var chart_area_bottom_right: Vector2 = Vector2.ZERO;
 var max_and_min: Dictionary;
 var polyline: Line2D;
 var grid_line_nodes: Dictionary = {};
+var chart_active: bool = false;
 
 ## Settings will apply the next time display() is called.
 ## Some settings may apply the next time queue_plot() is called.
@@ -38,12 +39,12 @@ func display(data: Dictionary) -> void:
 	for point in scaled_points:
 		polyline.add_point(point);
 	if settings.margins:
-		chart_area_top_left = Vector2(60, 0);
-		chart_area_bottom_right = size - Vector2(0, 40);
+		calculate_chart_area_with_margins();
 		draw_grid_lines();
 	else:
 		chart_area_top_left = Vector2(0, 0);
 		chart_area_bottom_right = size;
+	chart_active = true;
 
 ## Calculates the relative positions the points will be placed at, from 0 to 1.
 func generate_point_array(data: Dictionary) -> PackedVector2Array:
@@ -95,7 +96,17 @@ func calculate_point_array(points: PackedVector2Array) -> PackedVector2Array:
 
 
 func _resized() -> void:
-	pass ;
+	if !chart_active:
+		return ;
+	calculate_chart_area_with_margins();
+	for i in range(percent_points.size()):
+		var point = percent_points[i];
+		var scaled_point = Vector2(
+			get_x_on_chart(point.x),
+			get_y_on_chart(point.y)
+		);
+		polyline.set_point_position(i, scaled_point);
+	draw_grid_lines();
 
 func get_y_on_chart(y_value: float) -> float:
 	var bottom_border: float = chart_area_bottom_right.y;
@@ -177,3 +188,7 @@ func clear_grid_lines() -> void:
 
 func calculate_reasonable_number_of_grid_lines(value: float) -> int:
 	return round(value / 50);
+
+func calculate_chart_area_with_margins() -> void:
+	chart_area_top_left = Vector2(60, 0);
+	chart_area_bottom_right = size - Vector2(0, 40);
